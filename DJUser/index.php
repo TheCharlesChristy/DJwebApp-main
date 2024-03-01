@@ -1,24 +1,14 @@
 <?php
 session_start();
-include_once 'includes/db.inc.php';
+require_once 'includes/db.inc.php'; // Use the centralized DB connection
+
 if (isset($_GET['user'])) {
-  global $useremail;
-  $useremail =  $_GET['user'];
-  $_SESSION['useremail'] = strtolower($_GET['user']);
+    $useremail = $_GET['user'];
+    $_SESSION['useremail'] = strtolower($useremail);
 }
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $servername = "localhost";
-    $username = "root";
-    $password = "";
-    $dbname = "nick-burret-dj-web-app";
-
-    // Create connection
-    $conn = new mysqli($servername, $username, $password, $dbname);
-
-    // Check connection
-    if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
-    }
+    // Assuming $conn is your MySQLi connection from db.inc.php
 
     // Get form data
     $useremail = $_SESSION['useremail'];
@@ -27,10 +17,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $title = $_POST['song_title'];
     $message = $_POST['message'];
 
-    // Insert data into the database
-    $sql = "INSERT INTO queue (Requestee, RequesteeName, Artist, Songname, Message)
-            VALUES ('$useremail', '$name' , '$artist', '$title', '$message')";
+    // Prepare an insert statement to prevent SQL injection
+    $stmt = $conn->prepare("INSERT INTO queue (Requestee, RequesteeName, Artist, Songname, Message) VALUES (?, ?, ?, ?, ?)");
 
+    // Bind variables to the prepared statement as parameters
+    $stmt->bind_param("sssss", $useremail, $name, $artist, $title, $message);
+
+    // Execute the prepared statement
+    if($stmt->execute()){
+        echo "Record inserted successfully";
+    } else{
+        echo "Error: " . $stmt->error;
+    }
+
+    // Close statement
+    $stmt->close();
+
+    // Close connection
     $conn->close();
 }
 ?>

@@ -1,26 +1,37 @@
 <?php
 session_start();
-include_once 'includes/db.inc.php';
+require_once 'db.inc.php'; // Include the database connection
+
 if (isset($_GET['user'])) {
     global $useremail;
-    $useremail =  $_GET['user'];
-}  
+    $useremail = $_GET['user'];
+}
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $song_id = $_POST['song_id'];
-    $useremail = $_POST['useremail'];
-    $sql = "INSERT INTO queue (SongID, Requestee) VALUES (?, ?)";
-    if ($stmt = $conn->prepare($sql)) {
-        $stmt->bind_param("is", $song_id, $useremail);
-        $stmt->execute();
-        $stmt->close();
+    // Assuming $conn is your MySQLi connection from db.inc.php
+
+    // Get form data and ensure proper escaping to prevent SQL Injection
+    $artist = mysqli_real_escape_string($conn, $_POST['song_artist']);
+    $song_name = mysqli_real_escape_string($conn, $_POST['song_name']);
+
+    // Insert data into the database using prepared statement
+    $stmt = $conn->prepare("INSERT INTO songs (Artist, SongName) VALUES (?, ?)");
+    $stmt->bind_param("ss", $artist, $song_name);
+
+    if ($stmt->execute()) {
+        // Success message or redirection
+        echo "Record inserted successfully";
     } else {
-        echo json_encode(["status" => "error", "message" => "Error preparing statement."]);
+        // Error handling
+        echo "Error: " . $stmt->error;
     }
+
+    // Close statement and connection
+    $stmt->close();
     $conn->close();
-    echo json_encode(["status" => "success"]);
-    exit();
 }
 ?>
+
 
 <!-- Redirect back to the main page -->
 <script>

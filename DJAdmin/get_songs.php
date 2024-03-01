@@ -1,31 +1,24 @@
 <?php
 header('Content-Type: application/json');
+require_once 'includes/db.inc.php'; // Include the database connection
 
-// Replace the following variables with your database credentials
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "nick-burret-dj-web-app";
+// Get the sorting parameter from the query string and validate it
+$sort_by = isset($_GET['sort_by']) && in_array($_GET['sort_by'], ['artist', 'song_name', 'other_columns']) ? $_GET['sort_by'] : 'artist';
 
-// Get the sorting parameter from the query string
-$sort_by = isset($_GET['sort_by']) ? $_GET['sort_by'] : 'artist';
-
-$conn = new mysqli($servername, $username, $password, $dbname);
-
-if ($conn->connect_error) {
-    die(json_encode(array("status" => "error", "message" => "Connection failed: " . $conn->connect_error)));
-}
-
-// Sort the data by the given parameter
+// Prepare the SQL statement to prevent SQL injection
+// Note: Directly using variables for column names in SQL queries can be risky and is generally not recommended because prepared statements do not support binding column names.
+// As a workaround, validate the input against a list of allowed fields as done above.
 $sql = "SELECT * FROM songs ORDER BY $sort_by ASC";
-$result = $conn->query($sql);
 
-$songs = array();
-while ($row = $result->fetch_assoc()) {
-    $songs[] = $row;
+if ($result = $conn->query($sql)) {
+    $songs = array();
+    while ($row = $result->fetch_assoc()) {
+        $songs[] = $row;
+    }
+    echo json_encode($songs);
+} else {
+    echo json_encode(array("status" => "error", "message" => "Query failed: " . $conn->error));
 }
-
-echo json_encode($songs);
 
 $conn->close();
 ?>
