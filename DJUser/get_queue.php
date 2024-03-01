@@ -1,6 +1,6 @@
 <?php
 header('Content-Type: application/json');
-
+include_once 'includes/db.inc.php';
 $servername = "localhost";
 $username = "root";
 $password = "";

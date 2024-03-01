@@ -1,5 +1,6 @@
 <?php
 session_start();
+include_once 'includes/db.inc.php';
 if (isset($_GET['user'])) {
   global $useremail;
   $useremail =  $_GET['user'];
