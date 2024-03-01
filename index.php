@@ -60,7 +60,7 @@ if (isset($_POST['submit'])) {
   if (mail($email, $subject, $message, $headers)) {
     echo "Email sent successfully to $email";
   } else {
-    echo "Email could not be sent.";
+    echo 
   }
 }
 ?>
