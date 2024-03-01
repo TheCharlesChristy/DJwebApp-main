@@ -48,7 +48,7 @@ if (isset($_POST['submit'])) {
         $mail->Port       = 465;
 
         //Recipients
-        $mail->setFrom('your_gmail_address@gmail.com', 'Mailer');
+        $mail->setFrom('charleschristy325@gmail.com', 'Mailer');
         $mail->addAddress($email); // Add recipient
 
         // Content
