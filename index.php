@@ -6,7 +6,7 @@ if (isset($_POST['submit'])) {
   $email = $_POST['email'];
 
   // check if the email exists in the database
-  $stmt = $pdo->prepare("SELECT * FROM Accounts WHERE email = ?");
+  $stmt = $pdo->prepare("SELECT * FROM accounts WHERE Email = ?");
   $stmt->execute([$email]);
   $user = $stmt->fetch(PDO::FETCH_ASSOC);
   // if the email doesn't exist, create a new user record
@@ -14,7 +14,7 @@ if (isset($_POST['submit'])) {
     $type = "Client";
     $isAuthed = "0";
     $songrequested = "0";
-    $stmt = $pdo->prepare("INSERT INTO Accounts (Email, type, isAuthed, songrequested) VALUES (?, ?, ?, ?)");
+    $stmt = $pdo->prepare("INSERT INTO accounts (Email, type, isAuthed, songrequested) VALUES (?, ?, ?, ?)");
     $stmt->execute([$email, $type, $isAuthed, $songrequested]);
     // Send email here
   }
