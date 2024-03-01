@@ -1,69 +1,81 @@
 <?php
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+require 'vendor/autoload.php'; // Make sure this path is correct
+
 include_once 'includes/db.inc.php';
-// check if the form has been submitted
+
 if (isset($_POST['submit'])) {
-  // get the user's email address
-  $email = $_POST['email'];
+    $email = $_POST['email'];
 
-  // check if the email exists in the database
-  $stmt = $pdo->prepare("SELECT * FROM accounts WHERE Email = ?");
-  $stmt->execute([$email]);
-  $user = $stmt->fetch(PDO::FETCH_ASSOC);
-  // if the email doesn't exist, create a new user record
-  if (!$user) {
-    $type = "Client";
-    $isAuthed = "0";
-    $songrequested = "0";
-    $stmt = $pdo->prepare("INSERT INTO accounts (Email, type, isAuthed, songrequested) VALUES (?, ?, ?, ?)");
-    $stmt->execute([$email, $type, $isAuthed, $songrequested]);
-    // Send email here
-  }
-  // Prepare and execute a SELECT statement
-  $sql = 'SELECT * FROM accounts WHERE email = :email';
-  $statement = $pdo->prepare($sql);
-  $statement->execute(['email' => strtolower($email)]);
+    // Check if the email exists in the database
+    $stmt = $pdo->prepare("SELECT * FROM accounts WHERE Email = ?");
+    $stmt->execute([$email]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-  // Fetch the results
-  $results = $statement->fetchAll(PDO::FETCH_ASSOC);
-  // Process the results
-  foreach ($results as $row) {
-    echo $row['Email'] . ': ' . $row['type'] . '<br>';
-    if ($row['type'] == 'Admin'){
-      $type = 'Admin';
-    }else{
-      $type = 'User';
+    // If the email doesn't exist, create a new user record
+    if (!$user) {
+        $type = "Client";
+        $isAuthed = "0";
+        $songrequested = "0";
+        $stmt = $pdo->prepare("INSERT INTO accounts (Email, type, isAuthed, songrequested) VALUES (?, ?, ?, ?)");
+        $stmt->execute([$email, $type, $isAuthed, $songrequested]);
     }
-  }
-  // set the subject and message of the email
-  $subject = "Test Email";
-  $message = '<!DOCTYPE html>
-              <html>
-                <head>
-                  <meta charset="UTF-8">
-                  <title>Log in to My Website</title>
-                </head>
-                <body>
-                  <h1>Log in to My Website</h1>
-                  <p>' . $email . '<p>
-                  <p>Click the button below to log in:</p>
-                  <a href="localhost/DJ'.$type.'?user=' . $email . '" style="background-color:#4CAF50;border:none;color:white;padding:15px 32px;text-align:center;text-decoration:none;display:inline-block;font-size:16px;margin:4px 2px;cursor:pointer;">Log in</a>
-                </body>
-              </html>
-              ';
 
-  // set the headers of the email
-  $headers = "From: charleschristy325@gmail.com\r\n";
-  $headers .= "Reply-To: charleschristy325@gmail.com\r\n";
-  $headers .= "Content-type: text/html\r\n";
+    // Assuming $type needs to be determined again after the insertion
+    // Prepare and execute a SELECT statement to get the latest type
+    $sql = 'SELECT * FROM accounts WHERE Email = :email';
+    $statement = $pdo->prepare($sql);
+    $statement->execute(['email' => strtolower($email)]);
+    $results = $statement->fetchAll(PDO::FETCH_ASSOC);
 
-  // send the email using the PHP mail() function
-  if (mail($email, $subject, $message, $headers)) {
-    echo "Email sent successfully to $email";
-  } else {
-    echo "Email could not be sent.";
-  }
+    foreach ($results as $row) {
+        $type = $row['type'] === 'Admin' ? 'Admin' : 'User';
+    }
+
+    // Initialize PHPMailer and configure it to use Gmail for sending the email
+    $mail = new PHPMailer(true);
+
+    try {
+        //Server settings
+        $mail->isSMTP();
+        $mail->Host       = 'smtp.gmail.com';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = getenv('GMAIL_USER'); // Your Gmail address
+        $mail->Password   = getenv('GMAIL_PASS'); // Your Gmail password or app password
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        $mail->Port       = 465;
+
+        //Recipients
+        $mail->setFrom('your_gmail_address@gmail.com', 'Mailer');
+        $mail->addAddress($email); // Add recipient
+
+        // Content
+        $mail->isHTML(true);
+        $mail->Subject = 'Log in to My Website';
+        $mail->Body    = '<!DOCTYPE html>
+                          <html>
+                            <head>
+                              <meta charset="UTF-8">
+                              <title>Log in to My Website</title>
+                            </head>
+                            <body>
+                              <h1>Log in to My Website</h1>
+                              <p>' . $email . '</p>
+                              <p>Click the button below to log in:</p>
+                              <a href="localhost/DJ'.$type.'?user=' . $email . '" style="background-color:#4CAF50;border:none;color:white;padding:15px 32px;text-align:center;text-decoration:none;display:inline-block;font-size:16px;margin:4px 2px;cursor:pointer;">Log in</a>
+                            </body>
+                          </html>';
+
+        $mail->send();
+        echo 'Email has been sent successfully to ' . $email;
+    } catch (Exception $e) {
+        echo 'Email could not be sent. Mailer Error: ' . $mail->ErrorInfo;
+    }
 }
 ?>
+
 <!DOCTYPE html>
 <html>
 <head>
